@@ -1,0 +1,70 @@
+FROM debian:11-slim
+
+# Install necessary packages, including TCMalloc
+RUN apt update -y && apt install -y \
+    curl \
+    nano \
+    git \
+    wget \
+    build-essential \
+    libtcmalloc-minimal4 \
+    bc \
+    # ffmpeg \
+    # libsm6 \
+    # libxext6 \
+    # libxrender-dev
+    # --- Python3 --- #
+    python3 \
+    python3-venv \
+    python3-pip \
+    # --- Debian-based --- #
+    libgl1 \
+    libglib2.0-0 \
+    libgoogle-perftools-dev
+    # --- openSUSE-based --- #
+    # libtcmalloc4 \
+    # libglvnd
+
+# Install TCMalloc
+# RUN export LD_PRELOAD=/usr/lib/libtcmalloc_minimal.so.4
+RUN export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4
+
+# Create a non-root user 'webui' (no need to set -m as useradd does it by default)
+RUN useradd -m webui
+
+# Copy the application into the container
+# COPY . /app
+RUN mkdir /app
+
+# I want to do git clone into /app
+RUN git clone -b v1.9.0 https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /app
+
+# Change the ownership of the /app directory to the non-root user
+RUN chown -R webui:webui /app
+
+# Switch to the new user
+USER webui
+
+# Add the local bin directory to the PATH
+ENV PATH="/home/webui/.local/bin:${PATH}"
+
+# Configure Git to allow operations in the /app directory
+RUN git config --global --add safe.directory /
+
+# Set the working directory
+WORKDIR /app
+
+# Install required Python packages
+# RUN pip install --ignore-installed -r requirements.txt --verbose
+
+# Try to install xformers
+RUN pip install xformers || true
+
+# Expose port 7860 for the application
+EXPOSE 7860
+
+# Run the application
+# CMD ["bash", "webui.sh"]
+CMD ["bash", "webui.sh", "--listen", "--port", "7860", "--api", "--theme", "dark", "--update-all-extensions"]
+
+# TODO - Add venv_dir="-" and clone_dir="." to the web-user.sh script

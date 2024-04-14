@@ -1,0 +1,56 @@
+FROM ubuntu:22.04
+
+# Install necessary packages, including TCMalloc
+RUN apt update -y && apt install -y curl nano git wget libtcmalloc-minimal4 build-essential ffmpeg libsm6 libxext6 libxrender-dev
+
+# Install Miniconda (Python 3.9) into /miniconda
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py39_24.1.2-0-Linux-x86_64.sh -O /Miniconda3.sh && \
+    /bin/bash /Miniconda3.sh -b -p /miniconda
+# RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /Miniconda3.sh && \
+#     /bin/bash /Miniconda3.sh -b -p /miniconda
+
+# Cleanup
+RUN rm /Miniconda3.sh
+
+# Set the PATH for all users, including the non-root user
+ENV PATH="/miniconda/bin:${PATH}"
+
+# Initialize Conda for all shell sessions
+RUN /miniconda/bin/conda init bash
+
+# Create a non-root user 'webui' (no need to set -m as useradd does it by default)
+RUN useradd -m webui
+
+# Copy the application into the container
+COPY . /app
+
+# Change the ownership of the /app directory to the non-root user
+RUN chown -R webui:webui /app
+
+# Switch to the new user
+USER webui
+
+# Add the local bin directory to the PATH
+ENV PATH="/home/webui/.local/bin:${PATH}"
+
+# Configure Git to allow operations in the /app directory
+RUN git config --global --add safe.directory /
+
+# Set the working directory
+WORKDIR /app
+
+# Install required Python packages
+RUN pip install --ignore-installed -r requirements.txt --verbose
+# RUN pip install xtransformers
+
+# Expose port 7860 for the application
+EXPOSE 7860
+
+# Make sure the scripts are executable (if not already done before copying)
+# RUN chmod +x /app/entrypoint.sh
+
+# Run the application
+CMD ["bash", "webui.sh", "--listen", "--port", "7860", "--api", "--theme", "dark", "--update-all-extensions"]
+
+# Use the entrypoint script to start the container
+# ENTRYPOINT ["/app/entrypoint.sh"]

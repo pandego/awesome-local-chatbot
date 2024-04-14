@@ -1,0 +1,9 @@
+[submodule "frontend/open-webui"]
+	path = frontend/open-webui
+	url = https://github.com/open-webui/open-webui.git
+[submodule "backend/ollama"]
+	path = backend/ollama
+	url = https://github.com/ollama/ollama.git
+[submodule "backend/automatic1111"]
+	path = backend/automatic1111
+	url = https://github.com/AUTOMATIC1111/stable-diffusion-webui.git

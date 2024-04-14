@@ -1,0 +1,102 @@
+services:
+
+  # --- LLM endpoint --- #
+  ollama:
+    # build: 
+    #   context: ./backend/ollama
+    #   dockerfile: Dockerfile
+    image: ollama/ollama:0.1.31  # :latest
+    container_name: ollama
+    # pull_policy: always
+    tty: true
+    volumes:
+      - /data/ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: always
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=1
+    # Nvidia GPU
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              device_ids: [ '1' ] 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "localhost:11434"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+  
+  # --- Vision-LLM endpoint --- #
+  automatic1111:
+    build: 
+      context: ./backend/automatic1111
+      dockerfile: ../Dockerfile_automatic1111_simple
+    # image: auto1111_image
+    container_name: automatic1111
+    # network_mode: host
+    restart: always
+    ports:
+      - "7860:7860"
+    user: "webui"
+    volumes:
+      - /data/sd-webui-auto1111/models/Stable-diffusion:/app/stable-diffusion-webui/models/Stable-diffusion/
+      - /data/sd-webui-auto1111/.cache:/home/webui/.cache
+      - /data/sd-webui-auto1111/models:/app/models
+      - /data/sd-webui-auto1111/repositories:/app/repositories
+      - /data/sd-webui-auto1111/embeddings:/app/embeddings
+      - /data/sd-webui-auto1111/configs:/app/configs
+      - /data/sd-webui-auto1111/extensions:/app/extensions
+      - /data/sd-webui-auto1111/textual_inversion_templates:/app/textual_inversion_templates
+      - /data/sd-webui-auto1111/localizations:/app/localizations
+      - /data/sd-webui-auto1111/output:/app/output
+      - /data/sd-webui-auto1111/styles:/app/styles
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+      - HUGGING_FACE_HUB_TOKEN=""
+    
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              device_ids: [ '0' ]
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "localhost:7860"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  # --- Frontend --- #
+  open-webui:
+    # build:
+    #   context: ./frontend/open-webui
+    #   dockerfile: Dockerfile
+    image: ghcr.io/open-webui/open-webui:main  # :latest
+    container_name: open-webui
+    volumes:
+      - /data/open-webui:/app/backend/data
+    ports:
+      - "3000:8080"
+    restart: always
+    environment:
+      - SCARF_NO_ANALYTICS=true
+      - DO_NOT_TRACK=true
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - AUTOMATIC1111_BASE_URL=http://automatic1111:7860
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "localhost:8080"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+  
