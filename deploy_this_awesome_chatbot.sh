@@ -15,6 +15,7 @@ if docker exec -it open-webui cp /app/backend/data/favicon.png /app/backend/stat
     echo "Favicon personalized successfully! Enjoy the new look! 🌟"
 else
     echo "Oops! Something went wrong while personalizing the favicon. 😔"
+    echo "Did you remember to copy the favicon.png to the data folder? 🤔"
     echo "Please check the logs for more details."
     exit 1
 fi
