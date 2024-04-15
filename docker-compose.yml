@@ -76,9 +76,9 @@ services:
 
   # --- Frontend --- #
   open-webui:
-    # build:
-    #   context: ./frontend/open-webui
-    #   dockerfile: Dockerfile
+    build:
+      context: ./frontend/open-webui
+      dockerfile: Dockerfile
     image: ghcr.io/open-webui/open-webui:main  # :latest
     container_name: open-webui
     volumes:
