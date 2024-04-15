@@ -9,13 +9,13 @@ This was testing on **Ubuntu only**. Apart from that you will need somethings in
 - Bash shell _(obviously)_
 
 # Deployment
-Everything is set in the `docker-compose.yml`. You'll have 2 services, the LLM-endpoint (here we use [Ollama](https://ollama.com/library)), and the Frontend (here we use [Open WebUI](https://docs.openwebui.com/)), and more coming soon (Vision-Endpoint!)
-- All you have to do is launch the bash script `deploy_this_awesome_chatbot.sh`:
+Everything is set in the `docker-compose.yml`. All you have to do is launch the bash script `deploy_this_awesome_chatbot.sh`:
 ```bash
 chmod +x deploy_this_awesome_chatbot.sh  # optional
 
 sh deploy_this_awesome_chatbot.sh
 ```
+_Et Voilà !_
 ___
 
 # Bash Script in Detail
