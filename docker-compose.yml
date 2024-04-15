@@ -83,10 +83,13 @@ services:
     container_name: open-webui
     volumes:
       - /data/open-webui:/app/backend/data
+    # command: ["cp", "/app/backend/data/custom_logo_favicon.png", "/app/backend/static/favicon.png"]
     ports:
       - "3000:8080"
     restart: always
     environment:
+      - WEBUI_NAME=Pepito Bot
+      - CUSTOM_NAME=Pepito Bot
       - SCARF_NO_ANALYTICS=true
       - DO_NOT_TRACK=true
       - OLLAMA_BASE_URL=http://ollama:11434
