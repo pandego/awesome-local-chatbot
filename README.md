@@ -4,9 +4,9 @@ A repo to facilitate the creation of an awesome local ChatBot.
 # Environment
 This was testing on **Ubuntu only**. Apart from that you will need somethings installed:
 
-[] [Docker & Docker Compose](https://docs.docker.com/desktop/install/ubuntu/)
-[] [Nvidia Runtime for Docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installation)
-[] Bash shell _(obviously)_
+- [Docker & Docker Compose](https://docs.docker.com/desktop/install/ubuntu/)
+- [Nvidia Runtime for Docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installation)
+- Bash shell _(obviously)_
 
 # Deployment
 Everything is set in the `docker-compose.yml`. You'll have 2 services, the LLM-endpoint (here we use [Ollama](https://ollama.com/library)), and the Frontend (here we use [Open WebUI](https://docs.openwebui.com/)), and more coming soon (Vision-Endpoint!)
