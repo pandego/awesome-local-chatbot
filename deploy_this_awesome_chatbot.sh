@@ -9,16 +9,28 @@ else
 fi
 
 # Now, let's personalize the app with a fancy favicon! ✨
-echo "Personalizing the app with a fancy favicon... 🎉"
+echo "Personalizing the app with a fancy icon and favicon... 🎉"
+
 sleep 10  # Wait for the app to start before copying the favicon
 if docker exec -it open-webui cp /app/backend/data/favicon.png /app/backend/static/favicon.png; then
-    echo "Favicon personalized successfully! Enjoy the new look! 🌟"
+    echo "App Icon personalized successfully! 🌟"
 else
     echo "Oops! Something went wrong while personalizing the favicon. 😔"
     echo "Did you remember to copy the favicon.png to the data folder? 🤔"
     echo "Please check the logs for more details."
     exit 1
 fi
+
+sleep 5  # Wait for the app to reload the favicon
+if docker exec -it open-webui cp /app/backend/data/favicon.png /app/build/favicon.png; then
+    echo "Tab Favicon personalized successfully! 🌟"
+else
+    echo "Oops! Something went wrong while personalizing the favicon. 😔"
+    echo "Did you remember to copy the favicon.png to the data folder? 🤔"
+    echo "Please check the logs for more details."
+    exit 1
+fi
+
 
 # Hooray! The app has been successfully personalized! 🎈🎊
 echo "App personalization complete! Enjoy your customized chatbot! 🤖✨"
