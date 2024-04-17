@@ -5,7 +5,7 @@ services:
     # build: 
     #   context: ./backend/ollama
     #   dockerfile: Dockerfile
-    image: ollama/ollama:0.1.31  # :latest
+    image: ollama/ollama:0.1.32  # or ':latest' -> updated on 2024-04-17
     container_name: ollama
     # pull_policy: always
     tty: true
