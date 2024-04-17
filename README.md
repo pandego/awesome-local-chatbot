@@ -15,7 +15,7 @@ chmod +x deploy_this_awesome_chatbot.sh  # optional
 
 sh deploy_this_awesome_chatbot.sh
 ```
-_Et Voilà !_
+_Et Voilà !_ 🎈
 ___
 
 # Bash Script in Detail
