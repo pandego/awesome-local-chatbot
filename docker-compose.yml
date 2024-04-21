@@ -2,17 +2,14 @@ services:
 
   # --- LLM endpoint --- #
   ollama:
-    # build: 
-    #   context: ./backend/ollama
-    #   dockerfile: Dockerfile
-    image: ollama/ollama:0.1.32  # or ':latest' -> updated on 2024-04-17
+    image: ollama/ollama:${OLLAMA_VERSION}  # or ':latest' -> updated on 2024-04-17
     container_name: ollama
     # pull_policy: always
     tty: true
     volumes:
-      - /data/ollama:/root/.ollama
+      - ${OLLAMA_DATA_DIR}:/root/.ollama
     ports:
-      - "11434:11434"
+      - "${OLLAMA_PORT}:11434"
     restart: always
     environment:
       - NVIDIA_VISIBLE_DEVICES=1
@@ -34,27 +31,19 @@ services:
   # --- Vision-LLM endpoint --- #
   automatic1111:
     build: 
-      context: ./backend/automatic1111
-      dockerfile: ../Dockerfile_automatic1111_simple
-    # image: auto1111_image
+      context: .
+      dockerfile: Dockerfile.automatic1111
+      args:
+        AUTOMATIC1111_VERSION: ${AUTOMATIC1111_VERSION}
     container_name: automatic1111
     # network_mode: host
     restart: always
     ports:
-      - "7860:7860"
+      - "${AUTOMATIC1111_PORT}:7860"
     user: "webui"
     volumes:
-      - /data/sd-webui-auto1111/models/Stable-diffusion:/app/stable-diffusion-webui/models/Stable-diffusion/
-      - /data/sd-webui-auto1111/.cache:/home/webui/.cache
-      - /data/sd-webui-auto1111/models:/app/models
-      - /data/sd-webui-auto1111/repositories:/app/repositories
-      - /data/sd-webui-auto1111/embeddings:/app/embeddings
-      - /data/sd-webui-auto1111/configs:/app/configs
-      - /data/sd-webui-auto1111/extensions:/app/extensions
-      - /data/sd-webui-auto1111/textual_inversion_templates:/app/textual_inversion_templates
-      - /data/sd-webui-auto1111/localizations:/app/localizations
-      - /data/sd-webui-auto1111/output:/app/output
-      - /data/sd-webui-auto1111/styles:/app/styles
+      - ${AUTOMATIC1111_MODEL_DIR}:/stablediff-web/models/Stable-diffusion
+      - ${AUTOMATIC1111_OUTPUT_DIR}:/app/output
     environment:
       - NVIDIA_VISIBLE_DEVICES=0
       - HUGGING_FACE_HUB_TOKEN=""
@@ -76,24 +65,21 @@ services:
 
   # --- Frontend --- #
   open-webui:
-    build:
-      context: ./frontend/open-webui
-      dockerfile: Dockerfile
-    image: ghcr.io/open-webui/open-webui:main  # :latest
+    image: ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}  # :latest
     container_name: open-webui
     volumes:
-      - /data/open-webui:/app/backend/data
+      - ${OPEN_WEBUI_DATA_DIR}:/app/backend/data
     # command: ["cp", "/app/backend/data/custom_logo_favicon.png", "/app/backend/static/favicon.png"]
     ports:
-      - "3000:8080"
+      - "${OPEN_WEBUI_PORT}:8080"
     restart: always
     environment:
-      - WEBUI_NAME=Pepito Bot
-      - CUSTOM_NAME=Pepito Bot
-      - SCARF_NO_ANALYTICS=true
-      - DO_NOT_TRACK=true
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - AUTOMATIC1111_BASE_URL=http://automatic1111:7860
+      - WEBUI_NAME=${WEBUI_NAME}
+      - CUSTOM_NAME=${CUSTOM_NAME}
+      - SCARF_NO_ANALYTICS=${SCARF_NO_ANALYTICS}
+      - DO_NOT_TRACK=${DO_NOT_TRACK}
+      - OLLAMA_BASE_URL=http://ollama:${OLLAMA_PORT}
+      - AUTOMATIC1111_BASE_URL=http://automatic1111:${AUTOMATIC1111_PORT}
     # extra_hosts:
     #   - "host.docker.internal:host-gateway"
     healthcheck:
@@ -102,4 +88,3 @@ services:
       timeout: 30s
       retries: 5
       start_period: 30s
-  

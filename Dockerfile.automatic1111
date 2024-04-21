@@ -9,6 +9,7 @@ RUN apt update -y && apt install -y \
     build-essential \
     libtcmalloc-minimal4 \
     bc \
+    libpthread-stubs0-dev \
     # ffmpeg \
     # libsm6 \
     # libxext6 \
@@ -33,11 +34,9 @@ RUN export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4
 RUN useradd -m webui
 
 # Copy the application into the container
-# COPY . /app
 RUN mkdir /app
-
-# I want to do git clone into /app
-RUN git clone -b v1.9.0 https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /app
+ARG AUTOMATIC1111_VERSION
+RUN git clone -b v${AUTOMATIC1111_VERSION} https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /app
 
 # Change the ownership of the /app directory to the non-root user
 RUN chown -R webui:webui /app
@@ -64,7 +63,6 @@ RUN pip install xformers || true
 EXPOSE 7860
 
 # Run the application
-# CMD ["bash", "webui.sh"]
 CMD ["bash", "webui.sh", "--listen", "--port", "7860", "--api", "--theme", "dark", "--update-all-extensions"]
 
 # TODO - Add venv_dir="-" and clone_dir="." to the web-user.sh script

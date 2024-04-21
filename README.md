@@ -1,6 +1,11 @@
 # An Awesome Local ChatBot 🦾🤖
 A repo to facilitate the creation of an awesome local ChatBot.
 
+## Pre-requisits
+- Debian OS (Ubuntu or WSL)
+- Docker Engine installed
+- Nvidia Graphics is a plus
+
 # Environment
 This was testing on **Ubuntu only**. Apart from that you will need somethings installed:
 
@@ -9,7 +14,15 @@ This was testing on **Ubuntu only**. Apart from that you will need somethings in
 - Bash shell _(obviously)_
 
 # Deployment
-Everything is set in the `docker-compose.yml`. All you have to do is launch the bash script `deploy_this_awesome_chatbot.sh`:
+In order to deploy this Local ChatBot, you need to set a few things first:
+- Clone this repository and navigate into it:
+  ```bash
+  git clone 
+  cd awesome-local-chatbot
+  ```
+- Set up where you want your backup files to be in the `default.env`, variables ending in `_DIR`.
+- If you wish to customize the icon on the WebAPP, you can add your own, simple replace the path on the varable `CUSTOM_FAVICON_DIR`
+- Everything is set in the `docker-compose.yml`. All you have to do now is launch the bash script `deploy_this_awesome_chatbot.sh`:
 ```bash
 chmod +x deploy_this_awesome_chatbot.sh  # optional
 
@@ -20,13 +33,17 @@ ___
 
 # Bash Script in Detail
 ## Docker Compose
-Everything is set in the `docker-compose.yml`. You'll have 2 services, the LLM-endpoint (here we use [Ollama](https://ollama.com/library)), and the Frontend (here we use [Open WebUI](https://docs.openwebui.com/)), and more coming soon (Vision-Endpoint!).
+Everything is set in the `docker-compose.yml`. You'll have 3 services:
+  - The LLM endpoint 👉 [Ollama](https://ollama.com/library);
+  - The Image Generator endpoint 👉 [Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui);
+  - The Frontend 👉 [Open WebUI](https://docs.openwebui.com/).
+
 - You can launch it individually with the following command:
 ```bash
-docker-compose up -d --build
+docker-compose up --env-file default.env -d --build
 ```
 
-## Personalyse your ChatBot
+## Personalyze your ChatBot
 ### Company Logo
 You can change the **_OI_** logo for something else. For instance, add your company's logo.
 - To change to the company ICON run the following command:
@@ -38,3 +55,7 @@ docker exec -it open-webui cp /path/to/new/favicon.png /app/backend/static/favic
 ```bash
 docker exec -it open-webui cp /path/to/new/favicon.png /app/build/favicon.png
 ```
+
+## TODOs
+[X] Add Automatic1111 WebUI as Image Gen Backend
+[ ] Add ComfyUI as Image Gen Backend
