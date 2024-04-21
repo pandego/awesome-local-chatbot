@@ -43,7 +43,8 @@ else
     exit 1
 fi
 
-if docker exec -it ollama ollama pull $MODEL_NAME
+echo "Let's download $MODEL_NAME so that we can start playing right away! 🌟" 
+if docker exec -it ollama ollama pull $MODEL_NAME; then
     echo "Model $MODEL_NAME pulled successfully! 🌟"
 else
     echo "Oops! Something went wrong while pulling the model. 😔"
