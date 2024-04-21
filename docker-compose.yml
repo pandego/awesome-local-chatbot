@@ -5,7 +5,7 @@ services:
     # build: 
     #   context: ./backend/ollama
     #   dockerfile: Dockerfile
-    image: ollama/ollama:0.1.31  # :latest
+    image: ollama/ollama:0.1.32  # or ':latest' -> updated on 2024-04-17
     container_name: ollama
     # pull_policy: always
     tty: true
@@ -76,17 +76,20 @@ services:
 
   # --- Frontend --- #
   open-webui:
-    # build:
-    #   context: ./frontend/open-webui
-    #   dockerfile: Dockerfile
+    build:
+      context: ./frontend/open-webui
+      dockerfile: Dockerfile
     image: ghcr.io/open-webui/open-webui:main  # :latest
     container_name: open-webui
     volumes:
       - /data/open-webui:/app/backend/data
+    # command: ["cp", "/app/backend/data/custom_logo_favicon.png", "/app/backend/static/favicon.png"]
     ports:
       - "3000:8080"
     restart: always
     environment:
+      - WEBUI_NAME=Pepito Bot
+      - CUSTOM_NAME=Pepito Bot
       - SCARF_NO_ANALYTICS=true
       - DO_NOT_TRACK=true
       - OLLAMA_BASE_URL=http://ollama:11434
