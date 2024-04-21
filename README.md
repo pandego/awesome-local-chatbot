@@ -21,15 +21,14 @@ This was testing on **Ubuntu only**. Apart from that you will need somethings in
 In order to deploy this Local ChatBot, you need to set a few things first:
 - Clone this repository and navigate into it:
   ```bash
-  git clone 
+  git clone https://github.com/pandego/awesome-local-chatbot.git
   cd awesome-local-chatbot
   ```
-- Set up where you want your backup files to be in the `default.env`, variables ending in `_DIR`.
+- Set up your backup files directory in the `default.env`. Check for variables ending in `_DIR`.
 - If you wish to customize the icon on the WebAPP, you can add your own, simple replace the path on the varable `CUSTOM_FAVICON_DIR`
 - Everything is set in the `docker-compose.yml`. All you have to do now is launch the bash script `deploy_this_awesome_chatbot.sh`:
     ```bash
     chmod +x deploy_this_awesome_chatbot.sh  # optional
-
     sh deploy_this_awesome_chatbot.sh
     ```
 _Et Voilà !_ 🎈
