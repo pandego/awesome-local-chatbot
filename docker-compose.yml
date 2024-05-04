@@ -12,6 +12,8 @@ services:
       - "${OLLAMA_PORT}:11434"
     restart: always
     environment:
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL}
+      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS}
       - NVIDIA_VISIBLE_DEVICES=1
     # Nvidia GPU
     deploy:
