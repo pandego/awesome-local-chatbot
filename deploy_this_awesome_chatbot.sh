@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Source the environment variables from the default.env file
-if [ -f "default.env" ]; then
-    echo "Loading environment variables from default.env..."
+# Source the environment variables from the .env file
+if [ -f ".env" ]; then
+    echo "Loading environment variables from .env..."
     . ./default.env
 else
     echo "Error: default.env file not found."
@@ -11,7 +11,7 @@ fi
 
 # First, let's launch the Docker Compose 🚀
 echo "Launching the Docker Compose... 🐳"
-if docker compose --env-file default.env up -d --build; then
+if docker compose --env-file .env up -d --build; then
     echo "Docker Compose launched successfully! 🎉"
 else
     echo "Oops! Something went wrong while launching Docker Compose. 😔"
