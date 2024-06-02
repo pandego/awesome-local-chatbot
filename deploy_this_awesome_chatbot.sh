@@ -3,7 +3,7 @@
 # Source the environment variables from the .env file
 if [ -f ".env" ]; then
     echo "Loading environment variables from .env..."
-    . ./default.env
+    . ./.env
 else
     echo "Error: default.env file not found."
     exit 1
