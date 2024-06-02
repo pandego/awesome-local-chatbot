@@ -5,7 +5,7 @@ if [ -f ".env" ]; then
     echo "Loading environment variables from .env..."
     . ./.env
 else
-    echo "Error: default.env file not found."
+    echo "Error: .env file not found."
     exit 1
 fi
 
