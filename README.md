@@ -11,7 +11,9 @@ Everything is set in the `docker-compose.yml`. You'll have 3 services:
 - Nvidia Graphics is a plus
 
 # Environment
-This was testing on **Ubuntu only**. Apart from that you will need somethings installed:
+This was testing on **Ubuntu only**, but it should work well on **MacOS** and **Windows WSL**.
+
+Apart from that you will need somethings installed:
 
 - [Docker & Docker Compose](https://docs.docker.com/desktop/install/ubuntu/)
 - [Nvidia Runtime for Docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installation)
@@ -24,8 +26,17 @@ In order to deploy this Local ChatBot, you need to set a few things first:
   git clone https://github.com/pandego/awesome-local-chatbot.git
   cd awesome-local-chatbot
   ```
-- Set up your backup files directory in the `default.env`. Check for variables ending in `_DIR`.
+  
+### The `.env` File
+- Let's keep things clean. So first, copy `default.env` into `.env`:
+  ```bash
+  mv default.env .env
+  ```
+- If you're using **Groq** or **OpenAI** instead of **Ollama**, make sure to add the correspondent API keys in your recently created `.env` file.
+- Set up your backup files directory in the `.env` file. Check for variables ending in `_DIR`.
 - If you wish to customize the icon on the WebAPP, you can add your own, simple replace the path on the varable `CUSTOM_FAVICON_DIR`
+
+### Deploy it!
 - Everything is set in the `docker-compose.yml`. All you have to do now is launch the bash script `deploy_this_awesome_chatbot.sh`:
     ```bash
     chmod +x deploy_this_awesome_chatbot.sh  # optional
