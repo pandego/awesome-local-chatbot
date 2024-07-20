@@ -2,14 +2,14 @@ name: Update Versions and Create Release
 
 on:
   schedule:
-    - cron: '5 18 * * *'  # Run daily at midnight UTC
+    - cron: '25 18 * * *'  # Run daily at midnight UTC
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
   update-versions:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write  # Needed for pushing commits and creating releases
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -101,7 +101,7 @@ jobs:
       - name: Create new release
         if: steps.commit.outputs.changes_made == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           LATEST_TAG=${{ steps.get_latest_tag.outputs.tag }}
           MAJOR=$(echo $LATEST_TAG | cut -d. -f1 | tr -d 'v')
