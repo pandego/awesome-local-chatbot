@@ -1,18 +1,20 @@
-name: Update Versions
+name: Update Versions and Create Release
 
 on:
   schedule:
-    - cron: '20 17 * * *'  # Run daily at midnight UTC
+    - cron: '5 18 * * *'  # Run daily at midnight UTC
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
   update-versions:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.PAT }}  # Use PAT for checkout
+          fetch-depth: 0  # Fetch all history for all tags and branches
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -25,9 +27,11 @@ jobs:
           pip install requests
 
       - name: Update versions
+        id: update
         run: |
           import re
           import requests
+          import os
 
           def get_latest_release(repo):
               url = f"https://api.github.com/repos/{repo}/releases/latest"
@@ -50,21 +54,74 @@ jobs:
           ollama_version = get_latest_release('ollama/ollama')
           open_webui_version = get_latest_release('open-webui/open-webui')
 
+          changes_made = False
+
           if ollama_version:
               update_env_file('default.env', 'OLLAMA_VERSION', ollama_version)
               print(f"Updated OLLAMA_VERSION to {ollama_version}")
+              changes_made = True
 
           if open_webui_version:
               update_env_file('default.env', 'OPEN_WEBUI_VERSION', open_webui_version)
               print(f"Updated OPEN_WEBUI_VERSION to {open_webui_version}")
+              changes_made = True
+
+          if changes_made:
+              print("::set-output name=versions_updated::true")
+              print("Versions were updated in default.env")
+          else:
+              print("::set-output name=versions_updated::false")
+              print("No version updates were necessary")
         shell: python
 
-      - name: Commit and push if changed
+      - name: Commit changes
+        id: commit
         run: |
-          git config --global user.name 'GitHub Action'
-          git config --global user.email 'action@github.com'
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add default.env
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update OLLAMA_VERSION and OPEN_WEBUI_VERSION" && git push)
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes to commit. No new release needed."
+            echo "::set-output name=changes_made::false"
+          else
+            git commit -m "[CONF] Update OLLAMA_VERSION and OPEN_WEBUI_VERSION"
+            git push
+            echo "Changes committed and pushed. Preparing for release."
+            echo "::set-output name=changes_made::true"
+          fi
+
+      - name: Get latest tag
+        id: get_latest_tag
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "::set-output name=tag::$LATEST_TAG"
+          echo "Current latest tag: $LATEST_TAG"
+
+      - name: Create new release
+        if: steps.commit.outputs.changes_made == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}  # Use PAT for push
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        run: |
+          LATEST_TAG=${{ steps.get_latest_tag.outputs.tag }}
+          MAJOR=$(echo $LATEST_TAG | cut -d. -f1 | tr -d 'v')
+          MINOR=$(echo $LATEST_TAG | cut -d. -f2)
+          PATCH=$(echo $LATEST_TAG | cut -d. -f3)
+          NEW_TAG="v$MAJOR.$MINOR.$((PATCH+1))"
           
+          echo "Creating new tag: $NEW_TAG"
+          git tag $NEW_TAG
+          git push origin $NEW_TAG
+          
+          echo "Creating new release: $NEW_TAG"
+          gh release create $NEW_TAG -t "Release $NEW_TAG" -n "Automated release for version updates in default.env"
+          
+          echo "New release $NEW_TAG created successfully"
+        
+      - name: Echo release status
+        run: |
+          if [ "${{ steps.commit.outputs.changes_made }}" == "true" ]; then
+            echo "A new release was created due to version updates."
+          else
+            echo "No release was created as no version updates were necessary."
+          fi
