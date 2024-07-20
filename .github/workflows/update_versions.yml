@@ -2,7 +2,7 @@ name: Update Versions and Create Release
 
 on:
   schedule:
-    - cron: '25 18 * * *'  # Run daily at midnight UTC
+    - cron: '20 19 * * *'  # Run daily at midnight UTC
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
@@ -66,11 +66,12 @@ jobs:
               print(f"Updated OPEN_WEBUI_VERSION to {open_webui_version}")
               changes_made = True
 
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"versions_updated={'true' if changes_made else 'false'}\n")
+
           if changes_made:
-              print("::set-output name=versions_updated::true")
               print("Versions were updated in default.env")
           else:
-              print("::set-output name=versions_updated::false")
               print("No version updates were necessary")
         shell: python
 
@@ -82,12 +83,12 @@ jobs:
           git add default.env
           if git diff --quiet && git diff --staged --quiet; then
             echo "No changes to commit. No new release needed."
-            echo "::set-output name=changes_made::false"
+            echo "changes_made=false" >> $GITHUB_OUTPUT
           else
             git commit -m "[CONF] Update OLLAMA_VERSION and OPEN_WEBUI_VERSION"
             git push
             echo "Changes committed and pushed. Preparing for release."
-            echo "::set-output name=changes_made::true"
+            echo "changes_made=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Get latest tag
@@ -95,7 +96,7 @@ jobs:
         run: |
           git fetch --tags
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          echo "::set-output name=tag::$LATEST_TAG"
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           echo "Current latest tag: $LATEST_TAG"
 
       - name: Create new release
