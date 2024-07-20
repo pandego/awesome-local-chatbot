@@ -1,0 +1,65 @@
+name: Update Versions
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight UTC
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  update-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Update versions
+        run: |
+          import re
+          import requests
+
+          def get_latest_release(repo):
+              url = f"https://api.github.com/repos/{repo}/releases/latest"
+              response = requests.get(url)
+              if response.status_code == 200:
+                  return response.json()['tag_name'].lstrip('v')
+              return None
+
+          def update_env_file(file_path, key, value):
+              with open(file_path, 'r') as file:
+                  content = file.read()
+              
+              pattern = fr"({key}=').*?'"
+              replacement = f"\\1{value}'"
+              updated_content = re.sub(pattern, replacement, content)
+              
+              with open(file_path, 'w') as file:
+                  file.write(updated_content)
+
+          ollama_version = get_latest_release('ollama/ollama')
+          open_webui_version = get_latest_release('open-webui/open-webui')
+
+          if ollama_version:
+              update_env_file('default.env', 'OLLAMA_VERSION', ollama_version)
+              print(f"Updated OLLAMA_VERSION to {ollama_version}")
+
+          if open_webui_version:
+              update_env_file('default.env', 'OPEN_WEBUI_VERSION', open_webui_version)
+              print(f"Updated OPEN_WEBUI_VERSION to {open_webui_version}")
+        shell: python
+
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add default.env
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update OLLAMA_VERSION and OPEN_WEBUI_VERSION" && git push)
