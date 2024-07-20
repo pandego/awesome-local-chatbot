@@ -30,14 +30,21 @@ In order to deploy this Local ChatBot, you need to set a few things first:
 ### The `.env` File
 - Let's keep things clean. So first, copy `default.env` into `.env`:
   ```bash
-  mv default.env .env
+  cp default.env .env
   ```
 - If you're using **Groq** or **OpenAI** instead of **Ollama**, make sure to add the correspondent API keys in your recently created `.env` file.
 - Set up your backup files directory in the `.env` file. Check for variables ending in `_DIR`.
 - If you wish to customize the icon on the WebAPP, you can add your own, simple replace the path on the varable `CUSTOM_FAVICON_DIR`
 
 ### Deploy it!
-- Everything is set in the `docker-compose.yml`. All you have to do now is launch the bash script `deploy_this_awesome_chatbot.sh`:
+- Everything is set in the `docker-compose_xxx.yml` files, and there are two:
+  - **`docker-compose_cpu.yml`** contains the simpliest configuration, without the image generation endpoint. Use this if you are deploying it to a cpu-only server ir a Raspberry Pi.
+  - **`docker-compose_gpu.yml`** contains some Nvidia-specific configuaration, use it if you want the image generation endpoint enabled and you have an Nvidia-GPU machine.
+- One you chose, copy the selected `docker-compose_xxx.yml` file into `docker-compose.yml`, for instance:
+    ```bash
+    cp docker-compose_cpu.yml docker-compose.yml
+    ```
+- All you have to do now is launch the bash script `deploy_this_awesome_chatbot.sh`:
     ```bash
     chmod +x deploy_this_awesome_chatbot.sh  # optional
     sh deploy_this_awesome_chatbot.sh

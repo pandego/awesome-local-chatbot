@@ -1,0 +1,46 @@
+services:
+
+  # ----------------------- #
+  # --- Ollama Endpoint --- #
+  # ----------------------- #
+
+  ollama:
+    image: ollama/ollama:${OLLAMA_VERSION}  # :latest
+    container_name: ollama
+    # pull_policy: always
+    tty: true
+    volumes:
+      - ${OLLAMA_DATA_DIR}:/root/.ollama
+    ports:
+      - "${OLLAMA_PORT}:11434"
+    restart: always
+    environment:
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL}
+      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS}
+
+  # --------------------------- #
+  # --- Open WebUI Frontend --- #
+  # --------------------------- #
+  
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}  # :latest
+    container_name: open-webui
+    volumes:
+      - ${OPEN_WEBUI_DATA_DIR}:/app/backend/data
+    ports:
+      - "${OPEN_WEBUI_PORT}:8080"
+    restart: always
+    environment:
+      - WEBUI_NAME=${WEBUI_NAME}
+      - CUSTOM_NAME=${CUSTOM_NAME}
+      - SCARF_NO_ANALYTICS=${SCARF_NO_ANALYTICS}
+      - DO_NOT_TRACK=${DO_NOT_TRACK}
+      - OLLAMA_BASE_URL=http://ollama:${OLLAMA_PORT}
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "localhost:8080"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
