@@ -38,8 +38,8 @@ jobs:
               with open(file_path, 'r') as file:
                   content = file.read()
               
-              pattern = fr"({key}=').*?'"
-              replacement = f"\\1{value}'"
+              pattern = fr"{key}='.*?'"
+              replacement = f"{key}='{value}'"
               updated_content = re.sub(pattern, replacement, content)
               
               with open(file_path, 'w') as file:
