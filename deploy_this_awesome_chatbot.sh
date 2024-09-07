@@ -24,7 +24,7 @@ echo "Personalizing the app with a fancy icon and favicon... 🎉"
 
 sleep 10  # Wait for the app to start before copying the favicon
 cp $CUSTOM_FAVICON_DIR $OPEN_WEBUI_DATA_DIR/favicon.png
-if docker exec -it open-webui cp /app/backend/data/favicon.png /app/backend/static/favicon.png; then
+if docker exec -it open-webui cp /app/backend/data/favicon.png /app/backend/open_webui/static/favicon.png; then
     echo "App Icon personalized successfully! 🌟"
 else
     echo "Oops! Something went wrong while personalizing the favicon. 😔"
