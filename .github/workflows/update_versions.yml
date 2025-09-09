@@ -86,7 +86,8 @@ jobs:
             echo "changes_made=false" >> $GITHUB_OUTPUT
           else
             git commit -m "[CONF] Update OLLAMA_VERSION and OPEN_WEBUI_VERSION"
-            git push
+            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/${{ github.repository }}.git
+            git push origin HEAD:${{ github.ref }}
             echo "Changes committed and pushed. Preparing for release."
             echo "changes_made=true" >> $GITHUB_OUTPUT
           fi
