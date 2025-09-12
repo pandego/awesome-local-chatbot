@@ -9,15 +9,14 @@ jobs:
   update-versions:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Needed for pushing commits and creating releases
+      contents: write  # needed for pushing commits and creating releases
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0            # full history
-          fetch-tags: true          # pull tags now to avoid later fetch
-          persist-credentials: true # keep token for subsequent git commands
-          token: ${{ secrets.PAT }}
+          fetch-depth: 0           # full history
+          fetch-tags: true         # include tags so no later fetch needed
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,7 +31,7 @@ jobs:
       - name: Update versions
         id: update
         env:
-          GH_TOKEN: ${{ secrets.PAT }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           import re
           import requests
@@ -40,25 +39,23 @@ jobs:
 
           def get_latest_release(repo, token=None):
               url = f"https://api.github.com/repos/{repo}/releases/latest"
-              headers = {}
-              if token:
-                  headers["Authorization"] = f"token {token}"
+              headers = {"Authorization": f"token {token}"} if token else {}
               r = requests.get(url, headers=headers, timeout=30)
               if r.status_code == 200:
-                  return r.json().get("tag_name", "").lstrip("v") or None
+                  return (r.json().get('tag_name') or '').lstrip('v') or None
               print(f"GitHub API error for {repo}: {r.status_code} {r.text}")
               return None
 
           def update_env_file(file_path, key, value):
-              with open(file_path, 'r') as f:
-                  content = f.read()
+              with open(file_path, 'r') as file:
+                  content = file.read()
               pattern = rf"{key}='.*?'"
               replacement = f"{key}='{value}'"
               updated_content = re.sub(pattern, replacement, content)
-              with open(file_path, 'w') as f:
-                  f.write(updated_content)
+              with open(file_path, 'w') as file:
+                  file.write(updated_content)
 
-          token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+          token = os.environ.get('GH_TOKEN') or os.environ.get('GITHUB_TOKEN')
 
           ollama_version = get_latest_release('ollama/ollama', token)
           open_webui_version = get_latest_release('open-webui/open-webui', token)
@@ -85,7 +82,7 @@ jobs:
         id: commit
         env:
           REPO: ${{ github.repository }}
-          PAT: ${{ secrets.PAT }}
+          TOKEN: ${{ github.token }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -95,8 +92,8 @@ jobs:
             echo "changes_made=false" >> $GITHUB_OUTPUT
           else
             git commit -m "[CONF] Update OLLAMA_VERSION and OPEN_WEBUI_VERSION"
-            # ensure pushes use PAT
-            git remote set-url origin https://x-access-token:${PAT}@github.com/${REPO}.git
+            # ensure pushes use GITHUB_TOKEN
+            git remote set-url origin https://x-access-token:${TOKEN}@github.com/${REPO}.git
             git push origin HEAD:${{ github.ref }}
             echo "Changes committed and pushed. Preparing for release."
             echo "changes_made=true" >> $GITHUB_OUTPUT
@@ -112,7 +109,7 @@ jobs:
       - name: Create new release
         if: steps.commit.outputs.changes_made == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           LATEST_TAG=${{ steps.get_latest_tag.outputs.tag }}
           MAJOR=$(echo "$LATEST_TAG" | cut -d. -f1 | tr -d 'v')
@@ -136,4 +133,4 @@ jobs:
           else
             echo "No release was created as no version updates were necessary."
           fi
-
+          
