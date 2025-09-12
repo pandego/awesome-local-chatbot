@@ -12,12 +12,15 @@ jobs:
       contents: write  # Needed for pushing commits and creating releases
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for all tags and branches
+          fetch-depth: 0            # full history
+          fetch-tags: true          # pull tags now to avoid later fetch
+          persist-credentials: true # keep token for subsequent git commands
           token: ${{ secrets.PAT }}
+
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
@@ -28,31 +31,37 @@ jobs:
 
       - name: Update versions
         id: update
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
         run: |
           import re
           import requests
           import os
 
-          def get_latest_release(repo):
+          def get_latest_release(repo, token=None):
               url = f"https://api.github.com/repos/{repo}/releases/latest"
-              response = requests.get(url)
-              if response.status_code == 200:
-                  return response.json()['tag_name'].lstrip('v')
+              headers = {}
+              if token:
+                  headers["Authorization"] = f"token {token}"
+              r = requests.get(url, headers=headers, timeout=30)
+              if r.status_code == 200:
+                  return r.json().get("tag_name", "").lstrip("v") or None
+              print(f"GitHub API error for {repo}: {r.status_code} {r.text}")
               return None
 
           def update_env_file(file_path, key, value):
-              with open(file_path, 'r') as file:
-                  content = file.read()
-              
-              pattern = fr"{key}='.*?'"
+              with open(file_path, 'r') as f:
+                  content = f.read()
+              pattern = rf"{key}='.*?'"
               replacement = f"{key}='{value}'"
               updated_content = re.sub(pattern, replacement, content)
-              
-              with open(file_path, 'w') as file:
-                  file.write(updated_content)
+              with open(file_path, 'w') as f:
+                  f.write(updated_content)
 
-          ollama_version = get_latest_release('ollama/ollama')
-          open_webui_version = get_latest_release('open-webui/open-webui')
+          token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+
+          ollama_version = get_latest_release('ollama/ollama', token)
+          open_webui_version = get_latest_release('open-webui/open-webui', token)
 
           changes_made = False
 
@@ -69,24 +78,25 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write(f"versions_updated={'true' if changes_made else 'false'}\n")
 
-          if changes_made:
-              print("Versions were updated in default.env")
-          else:
-              print("No version updates were necessary")
+          print("Versions were updated in default.env" if changes_made else "No version updates were necessary")
         shell: python
 
       - name: Commit changes
         id: commit
+        env:
+          REPO: ${{ github.repository }}
+          PAT: ${{ secrets.PAT }}
         run: |
-          git config --global user.name "${{ github.actor }}"
-          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add default.env
           if git diff --quiet && git diff --staged --quiet; then
             echo "No changes to commit. No new release needed."
             echo "changes_made=false" >> $GITHUB_OUTPUT
           else
             git commit -m "[CONF] Update OLLAMA_VERSION and OPEN_WEBUI_VERSION"
-            git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/${{ github.repository }}.git
+            # ensure pushes use PAT
+            git remote set-url origin https://x-access-token:${PAT}@github.com/${REPO}.git
             git push origin HEAD:${{ github.ref }}
             echo "Changes committed and pushed. Preparing for release."
             echo "changes_made=true" >> $GITHUB_OUTPUT
@@ -95,7 +105,6 @@ jobs:
       - name: Get latest tag
         id: get_latest_tag
         run: |
-          git fetch --tags
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           echo "Current latest tag: $LATEST_TAG"
@@ -106,24 +115,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           LATEST_TAG=${{ steps.get_latest_tag.outputs.tag }}
-          MAJOR=$(echo $LATEST_TAG | cut -d. -f1 | tr -d 'v')
-          MINOR=$(echo $LATEST_TAG | cut -d. -f2)
-          PATCH=$(echo $LATEST_TAG | cut -d. -f3)
+          MAJOR=$(echo "$LATEST_TAG" | cut -d. -f1 | tr -d 'v')
+          MINOR=$(echo "$LATEST_TAG" | cut -d. -f2)
+          PATCH=$(echo "$LATEST_TAG" | cut -d. -f3)
           NEW_TAG="v$MAJOR.$MINOR.$((PATCH+1))"
-          
+
           echo "Creating new tag: $NEW_TAG"
-          git tag $NEW_TAG
-          git push origin $NEW_TAG
-          
+          git tag "$NEW_TAG"
+          git push origin "$NEW_TAG"
+
           echo "Creating new release: $NEW_TAG"
-          gh release create $NEW_TAG -t "Release $NEW_TAG" -n "Automated release for version updates in default.env"
-          
+          gh release create "$NEW_TAG" -t "Release $NEW_TAG" -n "Automated release for version updates in default.env"
+
           echo "New release $NEW_TAG created successfully"
-        
+
       - name: Echo release status
         run: |
-          if [ "${{ steps.commit.outputs.changes_made }}" == "true" ]; then
+          if [ "${{ steps.commit.outputs.changes_made }}" = "true" ]; then
             echo "A new release was created due to version updates."
           else
             echo "No release was created as no version updates were necessary."
           fi
+
