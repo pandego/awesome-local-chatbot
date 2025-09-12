@@ -2,21 +2,22 @@ name: Update Versions and Create Release
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Run daily at midnight UTC
-  workflow_dispatch:  # Allow manual trigger
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   update-versions:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # needed for pushing commits and creating releases
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0           # full history
-          fetch-tags: true         # include tags so no later fetch needed
+          fetch-depth: 0
+          fetch-tags: true
           persist-credentials: true
+          token: ${{ github.token }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -33,9 +34,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          import re
-          import requests
-          import os
+          import re, requests, os
 
           def get_latest_release(repo, token=None):
               url = f"https://api.github.com/repos/{repo}/releases/latest"
@@ -47,13 +46,13 @@ jobs:
               return None
 
           def update_env_file(file_path, key, value):
-              with open(file_path, 'r') as file:
-                  content = file.read()
+              with open(file_path, 'r') as f:
+                  content = f.read()
               pattern = rf"{key}='.*?'"
               replacement = f"{key}='{value}'"
               updated_content = re.sub(pattern, replacement, content)
-              with open(file_path, 'w') as file:
-                  file.write(updated_content)
+              with open(file_path, 'w') as f:
+                  f.write(updated_content)
 
           token = os.environ.get('GH_TOKEN') or os.environ.get('GITHUB_TOKEN')
 
@@ -61,12 +60,10 @@ jobs:
           open_webui_version = get_latest_release('open-webui/open-webui', token)
 
           changes_made = False
-
           if ollama_version:
               update_env_file('default.env', 'OLLAMA_VERSION', ollama_version)
               print(f"Updated OLLAMA_VERSION to {ollama_version}")
               changes_made = True
-
           if open_webui_version:
               update_env_file('default.env', 'OPEN_WEBUI_VERSION', open_webui_version)
               print(f"Updated OPEN_WEBUI_VERSION to {open_webui_version}")
@@ -92,7 +89,6 @@ jobs:
             echo "changes_made=false" >> $GITHUB_OUTPUT
           else
             git commit -m "[CONF] Update OLLAMA_VERSION and OPEN_WEBUI_VERSION"
-            # ensure pushes use GITHUB_TOKEN
             git remote set-url origin https://x-access-token:${TOKEN}@github.com/${REPO}.git
             git push origin HEAD:${{ github.ref }}
             echo "Changes committed and pushed. Preparing for release."
